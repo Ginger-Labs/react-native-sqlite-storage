@@ -1,5 +1,5 @@
 # react-native-sqlite-storage
-SQLite3 Native Plugin for React Native for both Android (Classic and Native) and iOS
+SQLite3 Native Plugin for React Native for both Android (Classic and Native), iOS and Windows
 
 Foundation of this library is based on Chris Brody's Cordova SQLite plugin.
 
@@ -53,7 +53,7 @@ Done, skip to Step 2.
 This command should be executed in the root directory of your RN project
 ```shell
 npm install --save react-native-sqlite-storage
-rnpm link
+react-native link
 ```
 
 rnpm and xcode are dependencies of this project and should get installed with the module but in case there are issue running rnpm link and rnpm/xcode are not already installed you can try to install it globally as follows:
@@ -149,7 +149,7 @@ project(':react-native-sqlite-storage').projectDir = new File(rootProject.projec
 
 dependencies {
     ...
-    compile project(':react-native-sqlite-storage')
+    implementation project(':react-native-sqlite-storage')
 }
 ```
 
@@ -200,7 +200,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
         new SQLitePluginPackage(),   // register SQLite Plugin here
-        new MainReactPackage())
+        new MainReactPackage());
     }
 }
 ```
@@ -365,7 +365,7 @@ dbMaster.detach( 'second', successCallback, errorCallback );
 For sure, their is also Promise-support available for attach() and detach(), as shown in the example-application under the
 directory "examples".
 
-# Original Cordova SQLite Bindings from Chris Brody
+# Original Cordova SQLite Bindings from Chris Brody and Davide Bertola
 https://github.com/litehelpers/Cordova-sqlite-storage
 
 The issues and limitations for the actual SQLite can be found on this site.
