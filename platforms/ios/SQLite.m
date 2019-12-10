@@ -132,8 +132,14 @@ RCT_EXPORT_MODULE();
   if (dbFile == NULL) {
     return NULL;
   }
-  
-  NSString *dbdir = appDBPaths[atkey];
+
+  NSString *dbdir;
+  if ([atkey hasPrefix:@"app-group:"]) {
+    NSString *appGroup = [atkey stringByReplacingOccurrencesOfString:@"app-group:" withString:@""];
+    dbdir = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:appGroup] absoluteString];
+  } else {
+    dbdir = appDBPaths[atkey];
+  }
   NSString *dbPath = [dbdir stringByAppendingPathComponent: dbFile];
   return dbPath;
 }
@@ -155,6 +161,10 @@ RCT_EXPORT_METHOD(open: (NSDictionary *) options success:(RCTResponseSenderBlock
   
   @synchronized (self) {
     NSString *dbfilename = options[@"name"];
+    if (dbfileName == NULL) {
+      dbfileName = options[@"name"];
+    }
+
     if (dbfilename == NULL) {
       RCTLog(@"No db name specified for open");
       pluginResult = [SQLiteResult resultWithStatus:SQLiteStatus_OK messageAsString:@"You must specify database name"];
@@ -214,6 +224,8 @@ RCT_EXPORT_METHOD(open: (NSDictionary *) options success:(RCTResponseSenderBlock
           pluginResult = [SQLiteResult resultWithStatus:SQLiteStatus_ERROR messageAsString:@"Unable to open DB"];
           return;
         } else {
+          sqlite3_exec(db, "PRAGMA journal_mode=WAL;", 0, 0, 0);
+
           sqlite3_create_function(db, "regexp", 2, SQLITE_ANY, NULL, &sqlite_regexp, NULL, NULL);
           const char *key = NULL;
           
@@ -474,6 +486,10 @@ RCT_EXPORT_METHOD(executeSql: (NSDictionary *) options success:(RCTResponseSende
   if (sql == NULL) {
     return [SQLiteResult resultWithStatus:SQLiteStatus_ERROR messageAsString:@"You must specify a sql query to execute"];
   }
+
+  UIBackgroundTaskIdentifier taskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+    NSLog(@"BG Task expiration handler firing");
+  }];
   
   const char *sql_stmt = [sql UTF8String];
   NSDictionary *error = nil;
@@ -576,6 +592,8 @@ RCT_EXPORT_METHOD(executeSql: (NSDictionary *) options success:(RCTResponseSende
   }
   
   sqlite3_finalize (statement);
+
+  [[UIApplication sharedApplication] endBackgroundTask: taskIdentifier];
   
   if (error) {
     return [SQLiteResult resultWithStatus:SQLiteStatus_ERROR messageAsDictionary:error];
