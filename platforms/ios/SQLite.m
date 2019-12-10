@@ -161,8 +161,8 @@ RCT_EXPORT_METHOD(open: (NSDictionary *) options success:(RCTResponseSenderBlock
   
   @synchronized (self) {
     NSString *dbfilename = options[@"name"];
-    if (dbfileName == NULL) {
-      dbfileName = options[@"name"];
+    if (dbfilename == NULL) {
+      dbfilename = options[@"name"];
     }
 
     if (dbfilename == NULL) {
