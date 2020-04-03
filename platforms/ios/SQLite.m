@@ -125,7 +125,19 @@ RCT_EXPORT_MODULE();
 
 - (void)runInBackground:(void (^)())block
 {
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block);
+  // Request a background task synchronously
+  UIBackgroundTaskIdentifier taskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+    NSLog(@"BG Task expiration handler firing");
+  }];
+
+  // Wrap the call to the background block with code to end the background task
+  void (^taskWrapper)() = ^(){
+    block();
+    [[UIApplication sharedApplication] endBackgroundTask: taskIdentifier];
+  };
+
+  // Send the wrapped block to the dispatch queue
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), taskWrapper);
 }
 
 -(id) getDBPath:(NSString *)dbFile at:(NSString *)atkey {
@@ -486,10 +498,6 @@ RCT_EXPORT_METHOD(executeSql: (NSDictionary *) options success:(RCTResponseSende
   if (sql == NULL) {
     return [SQLiteResult resultWithStatus:SQLiteStatus_ERROR messageAsString:@"You must specify a sql query to execute"];
   }
-
-  UIBackgroundTaskIdentifier taskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-    NSLog(@"BG Task expiration handler firing");
-  }];
   
   const char *sql_stmt = [sql UTF8String];
   NSDictionary *error = nil;
@@ -592,8 +600,6 @@ RCT_EXPORT_METHOD(executeSql: (NSDictionary *) options success:(RCTResponseSende
   }
   
   sqlite3_finalize (statement);
-
-  [[UIApplication sharedApplication] endBackgroundTask: taskIdentifier];
   
   if (error) {
     return [SQLiteResult resultWithStatus:SQLiteStatus_ERROR messageAsDictionary:error];
